@@ -12,6 +12,7 @@ add_executable(injector
     injector/source/src/main.cpp
     injector/source/src/inject.cpp
     injector/source/src/process.cpp
+    injector/source/src/config.cpp
 )
 
 add_library(test SHARED testdll/test.cpp)

@@ -2,10 +2,38 @@
 #include "process.h"
 #include <windows.h>
 #include <iostream>
+#include <psapi.h>
 
 namespace injector {
     namespace inject {
+        bool is_loaded(const std::string& name) {
+            HMODULE modules[1024];
+            DWORD needed;
+            
+            if (EnumProcessModules(process::handle, modules, sizeof(modules), &needed)) {
+                for (DWORD i = 0; i < (needed / sizeof(HMODULE)); i++) {
+                    char module[MAX_PATH];
+                    if (GetModuleBaseNameA(process::handle, modules[i], module, sizeof(module))) {
+                        if (name == module) {
+                            return true;
+                        }
+                    }
+                }
+            }
+            return false;
+        }
+        
         bool inject(const std::string& dll) {
+            std::string name = dll;
+            size_t pos = name.find_last_of("\\/");
+            if (pos != std::string::npos) {
+                name = name.substr(pos + 1);
+            }
+            
+            if (is_loaded(name)) {
+                MessageBoxA(NULL, "dll already loaded...", "error", MB_OK | MB_ICONINFORMATION);
+                return true;
+            }
 
                 LPVOID mem = VirtualAllocEx(
                     process::handle,
@@ -49,8 +77,8 @@ namespace injector {
                     VirtualFreeEx(process::handle, mem, 0, MEM_RELEASE);
                     return false;
                 }
-        
-                WaitForSingleObject(thread, INFINITE);
+                
+                WaitForSingleObject(thread, 2000);
                 
                 CloseHandle(thread);
                 VirtualFreeEx(process::handle, mem, 0, MEM_RELEASE);
